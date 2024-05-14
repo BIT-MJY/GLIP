@@ -638,7 +638,7 @@ class ATSSPostProcessor(torch.nn.Module):
         if box_cls is not None:
             #print('Classification.')
             box_cls = permute_and_flatten(box_cls, N, A, C, H, W)
-            box_cls = box_cls.sigmoid()
+            box_cls = box_cls.sigmoid()  # 分类 主要是为了得到分数
 
         # binary focal loss version
         if token_logits is not None:
@@ -648,7 +648,7 @@ class ATSSPostProcessor(torch.nn.Module):
             # turn back to original classes
             scores = convert_grounding_to_od_logits(logits=token_logits, box_cls=box_cls, positive_map=positive_map,
                                                     score_agg=self.score_agg)
-            box_cls = scores
+            box_cls = scores  # 分数
 
         # binary dot product focal version
         if dot_product_logits is not None:
@@ -667,6 +667,8 @@ class ATSSPostProcessor(torch.nn.Module):
                                                         score_agg=self.score_agg)
             box_cls = scores
 
+        # N: batch size, A:1, H:scaleH, W: scaleW
+        # permute_and_flatten后得到1,HxWx1,4
         box_regression = permute_and_flatten(box_regression, N, A, 4, H, W)
         box_regression = box_regression.reshape(N, -1, 4)
 
@@ -694,7 +696,10 @@ class ATSSPostProcessor(torch.nn.Module):
             per_box_loc = per_candidate_nonzeros[:, 0]
             per_class = per_candidate_nonzeros[:, 1] + 1
 
-            # print(per_class)
+            # # print(per_class)
+            # print(" per_box_regression shape",  per_box_regression.shape) # 第一个是scale的HxW[18000, 4]
+            # print(" per_anchors shape", per_anchors.shape) # 'BoxList' object has no attribute 'shape'
+            # print(" per_box_loc shape", per_box_loc.shape) #  每次循环不一样,也就是对于不同scale侯选框不一样,torch.Size([18])  torch.Size([103])  torch.Size([110]) torch.Size([49]) torch.Size([12]) 
 
             detections = self.box_coder.decode(
                 per_box_regression[per_box_loc, :].view(-1, 4),
@@ -718,6 +723,7 @@ class ATSSPostProcessor(torch.nn.Module):
                 ):
         sampled_boxes = []
         anchors = list(zip(*anchors))
+        # 循环主要是对不同的scale循环 5x scale
         for idx, (b, c, a) in enumerate(zip(box_regression, centerness, anchors)):
             o = None
             t = None

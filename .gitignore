@@ -43,4 +43,6 @@ dist/
 bert-base-uncased/pytorch_model.bin
 bert-base-uncased/model.safetensors
 
+figs/
+
 

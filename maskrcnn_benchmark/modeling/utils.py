@@ -17,9 +17,9 @@ def cat(tensors, dim=0):
 
 
 def permute_and_flatten(layer, N, A, C, H, W):
-    layer = layer.view(N, -1, C, H, W)
-    layer = layer.permute(0, 3, 4, 1, 2)
-    layer = layer.reshape(N, -1, C)
+    layer = layer.view(N, -1, C, H, W)  # 1,1,4,H,W
+    layer = layer.permute(0, 3, 4, 1, 2)  # 1,H,W,1,4
+    layer = layer.reshape(N, -1, C) # 1,HxWx1,4
     return layer
 
 

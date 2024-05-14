@@ -8,6 +8,7 @@ import numpy as np
 pylab.rcParams['figure.figsize'] = 20, 12
 from maskrcnn_benchmark.config import cfg
 from maskrcnn_benchmark.engine.predictor_glip import GLIPDemo
+import os
 
 def load(url):
     """
@@ -25,11 +26,11 @@ def imshow(img, caption):
     plt.axis("off")
     plt.figtext(0.5, 0.09, caption, wrap=True, horizontalalignment='center', fontsize=20)
 
-def save_imshow(img, caption):
+def save_imshow(img, caption, pathname):
     plt.imshow(img[:, :, [2, 1, 0]])
     plt.axis("off")
     plt.figtext(0.5, 0.09, caption, wrap=True, horizontalalignment='center', fontsize=20)
-    plt.savefig('figs.jpg')
+    plt.savefig(pathname)
 
 config_file = "configs/pretrain/glip_Swin_L.yaml"
 weight_file = "MODEL/glip_large_model.pth"
@@ -54,11 +55,15 @@ glip_demo = GLIPDemo(
     show_mask_heatmaps=False
 )
 
-# image = load('http://farm4.staticflickr.com/3693/9472793441_b7822c00de_z.jpg')
+src_dir = '/mnt/share_disk/dataset/epic-kitchens/epic-kitchens-download-scripts/EPIC-KITCHENS/P08/rgb_frames/P08_11'
+dst_dir = './figs/'
+filenames = os.listdir(src_dir)
 
-pil_image = Image.open('/home/GLIP/P02_rgb_frames_P02_12_frame_0000041494_0.jpg').convert("RGB")
-image = np.array(pil_image)[:, :, [2, 1, 0]]
-caption = 'hand'
-result, _ = glip_demo.run_on_web_image(image, caption, 0.5)
+for filename in filenames:
 
-save_imshow(result, caption)
+    pil_image = Image.open(os.path.join(src_dir,filename)).convert("RGB")
+    image = np.array(pil_image)[:, :, [2, 1, 0]]
+    caption = 'hand'
+    result, _ = glip_demo.run_on_web_image(image, caption, 0.5)
+    pathname = os.path.join(dst_dir,"bbox_"+filename)
+    save_imshow(result, caption, pathname)

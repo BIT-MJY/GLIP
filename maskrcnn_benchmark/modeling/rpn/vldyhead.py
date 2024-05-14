@@ -800,12 +800,32 @@ class VLDyHead(torch.nn.Module):
         for l, feature in enumerate(x):
             logits.append(self.cls_logits(dyhead_tower["visual"][l]))
 
+            # 看看用来回归手部位置的特征是什么形状  不同尺度的
+            # print("dyhead_tower-visual-l shape", dyhead_tower["visual"][l].shape)
+            '''
+            dyhead_tower-visual-l shape torch.Size([1, 256, 100, 180])
+            dyhead_tower-visual-l shape torch.Size([1, 256, 50, 90])
+            dyhead_tower-visual-l shape torch.Size([1, 256, 25, 45])
+            dyhead_tower-visual-l shape torch.Size([1, 256, 13, 23])
+            dyhead_tower-visual-l shape torch.Size([1, 256, 7, 12])
+            '''
+
             bbox_pred = self.scales[l](self.bbox_pred(dyhead_tower["visual"][l]))
+            # print("bbox_pred shape", bbox_pred.shape)
+            '''
+            bbox_pred shape torch.Size([1, 4, 100, 180])
+            bbox_pred shape torch.Size([1, 4, 50, 90])
+            bbox_pred shape torch.Size([1, 4, 25, 45])
+            bbox_pred shape torch.Size([1, 4, 13, 23])
+            bbox_pred shape torch.Size([1, 4, 7, 12])
+            '''
             bbox_reg.append(bbox_pred)
 
+            # print("centerness shape", self.centerness(dyhead_tower["visual"][l]).shape)
+            # 把上面的1,4换成1,1
             centerness.append(self.centerness(dyhead_tower["visual"][l]))
 
-            if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_TOKEN_LOSS:
+            if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_TOKEN_LOSS: # false
                 t_logits.append(self.token_logits(dyhead_tower["visual"][l]))
 
                 # ABLATION
@@ -815,7 +835,7 @@ class VLDyHead(torch.nn.Module):
                 # bias = b.repeat(B, 1, H, W)
                 # t_logits.append(self.token_logits(dyhead_tower["visual"][l] + bias) + self.bias0)
 
-            if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_CONTRASTIVE_ALIGN_LOSS:
+            if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_CONTRASTIVE_ALIGN_LOSS: # false
                 x = dyhead_tower["visual"][l]
                 B, _, H, W = x.shape
                 C = proj_tokens.shape[2]
@@ -827,9 +847,9 @@ class VLDyHead(torch.nn.Module):
                         torch.matmul(normalized_img_emb, normalized_text_emb.transpose(-1, -2)) / self.log_scale.exp())
                 contrastive_logits.append(contrastive_logit)
 
-            if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_DOT_PRODUCT_TOKEN_LOSS:
+            if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_DOT_PRODUCT_TOKEN_LOSS:  # true
                 x = dyhead_tower["visual"][l]
-                if self.cfg.MODEL.RPN.RETURN_FUSED_FEATURES:
+                if self.cfg.MODEL.RPN.RETURN_FUSED_FEATURES: # false
                     fused_visual_features.append(x)
                 B, C, H, W = x.shape
 
@@ -840,13 +860,14 @@ class VLDyHead(torch.nn.Module):
                 A = dot_product_proj_queries.shape[1]
                 bias = dot_product_proj_tokens_bias.unsqueeze(1).repeat(1, A, 1)
 
+                # 大概就是图像特征和language特征做一个dot_product
                 dot_product_logit = (torch.matmul(dot_product_proj_queries, dot_product_proj_tokens.transpose(-1, -2)) / self.log_scale.exp()) + bias
-                if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.CLAMP_DOT_PRODUCT:
+                if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.CLAMP_DOT_PRODUCT: # true
                     dot_product_logit = torch.clamp(dot_product_logit, max=50000)
                     dot_product_logit = torch.clamp(dot_product_logit, min=-50000)
                 dot_product_logits.append(dot_product_logit)
 
-            if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_SHALLOW_CONTRASTIVE_LOSS:
+            if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_SHALLOW_CONTRASTIVE_LOSS: # false
                 feat = feature
                 BF, CF, HF, WF = feat.shape
                 shallow_img_emb = permute_and_flatten(feat, BF, -1, CF, HF, WF)
@@ -900,9 +921,11 @@ class VLDyHeadModule(torch.nn.Module):
             # resizer needed
             embedding = language_dict_features['embedded']
             embedding = self.resizer(embedding)
-        elif self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_DOT_PRODUCT_TOKEN_LOSS:
+        elif self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_DOT_PRODUCT_TOKEN_LOSS:  # 走这里
             # no resizer needed
             embedding = language_dict_features['embedded']
+            # [1, 256, 768] 256应该是句子长度，768应该是特征
+            # print("language embedding shape", embedding.shape)
         else:
             embedding = None
 
@@ -911,7 +934,7 @@ class VLDyHeadModule(torch.nn.Module):
         else:
             text_masks = None
         
-        if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.ADD_LINEAR_LAYER:
+        if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.ADD_LINEAR_LAYER: # 默认False
             embedding = self.tunable_linear.weight[:embedding.size(1), :].unsqueeze(0) + embedding
             language_dict_features['embedded'] = embedding
             language_dict_features['hidden'] = self.tunable_linear.weight[:embedding.size(1), :].unsqueeze(0) + language_dict_features['hidden']

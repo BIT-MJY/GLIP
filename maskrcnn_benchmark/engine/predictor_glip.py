@@ -106,6 +106,7 @@ class GLIPDemo(object):
 
     def run_ner(self, caption):
         noun_phrases = find_noun_phrases(caption)
+        # print(noun_phrases) # 找的貌似是词组
         noun_phrases = [remove_punctuation(phrase) for phrase in noun_phrases]
         noun_phrases = [phrase for phrase in noun_phrases if phrase != '']
         relevant_phrases = noun_phrases
@@ -197,7 +198,10 @@ class GLIPDemo(object):
             print(tokens_positive)
         else:
             tokenized = self.tokenizer([original_caption], return_tensors="pt")
-            if custom_entity is None:
+            # print("tokenized keys", tokenized.keys())  # tokenized keys dict_keys(['input_ids', 'token_type_ids', 'attention_mask'])
+            print("tokenized shape", tokenized['input_ids'].shape)  # 1,8
+
+            if custom_entity is None: # 走这里
                 tokens_positive = self.run_ner(original_caption)
             else:
                 tokens_positive = []
@@ -216,6 +220,7 @@ class GLIPDemo(object):
                             tokens_positive.append([[m.start(), m.end()]])
             print(tokens_positive)
         # process positive map
+        # 大概的作用就是把有用的noun phrase的地方都填上1
         positive_map = create_positive_map(tokenized, tokens_positive)
 
         if self.cfg.MODEL.RPN_ARCHITECTURE == "VLDYHEAD":

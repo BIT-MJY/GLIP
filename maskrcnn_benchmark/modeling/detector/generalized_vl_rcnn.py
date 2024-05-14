@@ -209,7 +209,7 @@ class GeneralizedVLRCNN(nn.Module):
             language_dict_features, positive_map = self._forward_language_parallel(
                     captions=captions, targets=targets, device=device,
                     positive_map=positive_map)
-        else:
+        else: # 默认这里
             # language embedding
             language_dict_features = {}
             if captions is not None:
@@ -243,6 +243,9 @@ class GeneralizedVLRCNN(nn.Module):
                 else:
                     language_dict_features = self.language_backbone(tokenizer_input)
                 
+                # ['aggregate', 'embedded', 'masks', 'hidden']
+                # print("language_dict_features keys", language_dict_features.keys())
+
                 # ONE HOT
                 if self.cfg.DATASETS.ONE_HOT:
                     new_masks = torch.zeros_like(language_dict_features['masks'],
@@ -262,7 +265,7 @@ class GeneralizedVLRCNN(nn.Module):
             # the backbone only updates the "hidden" field in language_dict_features
             inputs = {"img": images.tensors, "lang": language_dict_features}
             visual_features, language_dict_features, swint_feature_c4 = self.backbone(inputs)
-        else:
+        else: # 默认走这里
             visual_features = self.backbone(images.tensors)
 
         # rpn force boxes
@@ -285,7 +288,7 @@ class GeneralizedVLRCNN(nn.Module):
                 for key, param in self.rpn.named_parameters():
                     null_loss += 0.0 * param.sum()
                 proposal_losses = {('rpn_null_loss', null_loss)}
-        else:
+        else: # 默认走这里  force_boxes=False
             proposals, proposal_losses, fused_visual_features = self.rpn(images, visual_features, targets, language_dict_features, positive_map,
                                               captions, swint_feature_c4)
         if self.roi_heads:

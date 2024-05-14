@@ -12,7 +12,7 @@ _RPN_META_ARCHITECTURES = {"RPN": RPNModule,
                            "FCOS": FCOSModule,
                            "ATSS": ATSSModule,
                            "DYHEAD": DyHeadModule,
-                           "VLDYHEAD": VLDyHeadModule
+                           "VLDYHEAD": VLDyHeadModule # 默认这个
                            }
 
 

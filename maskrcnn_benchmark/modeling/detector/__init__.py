@@ -2,7 +2,7 @@ from .generalized_rcnn import GeneralizedRCNN
 from .generalized_vl_rcnn import GeneralizedVLRCNN
 
 _DETECTION_META_ARCHITECTURES = {"GeneralizedRCNN": GeneralizedRCNN,
-                                 "GeneralizedVLRCNN": GeneralizedVLRCNN
+                                 "GeneralizedVLRCNN": GeneralizedVLRCNN  # swin_L用的是这个
                                  }
 
 
