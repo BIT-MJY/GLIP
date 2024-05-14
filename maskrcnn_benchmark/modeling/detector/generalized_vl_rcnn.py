@@ -23,7 +23,7 @@ import timeit
 import pdb
 from copy import deepcopy
 
-BERT_LOCAL_PATH_Token = "/home/mjy/dev/glip/bert-base-uncased/"
+BERT_LOCAL_PATH_Token = "./bert-base-uncased/"
 
 def random_word(input_ids, mask_token_id, vocabs, padding_token_id, greenlight_map):
     """

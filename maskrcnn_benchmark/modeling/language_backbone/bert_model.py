@@ -6,8 +6,8 @@ from torch import nn
 # from pytorch_pretrained_bert.modeling import BertModel
 from transformers import BertConfig, RobertaConfig, RobertaModel, BertModel
 
-BERT_LOCAL_PATH_Conf = "/home/mjy/dev/glip/bert-base-uncased/"
-BERT_LOCAL_PATH_Model = "/home/mjy/dev/glip/bert-base-uncased/"
+BERT_LOCAL_PATH_Conf = "./bert-base-uncased/"
+BERT_LOCAL_PATH_Model = "./bert-base-uncased/"
 
 
 class BertEncoder(nn.Module):

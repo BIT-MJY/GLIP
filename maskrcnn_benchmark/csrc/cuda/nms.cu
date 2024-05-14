@@ -1,13 +1,13 @@
 // Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 #include <ATen/ATen.h>
 #include <ATen/cuda/CUDAContext.h>
-#include <ATen/cuda/ThrustAllocator.h>
-#include <ATen/cuda/CUDAEvent.h>
+// #include <ATen/cuda/ThrustAllocator.h>
+// #include <ATen/cuda/CUDAEvent.h>
 
-//#include <THC/THC.h>
+#include <THC/THC.h>
 #include <THC/THCDeviceUtils.cuh>
 #include <THC/THCAtomics.cuh>
-#include "common.hpp"
+// #include "common.hpp"
 
 #include <vector>
 #include <iostream>
